@@ -35,18 +35,7 @@ export default function AuthPage() {
       if (error) {
         setError(error.message);
       } else if (data.user) {
-        // Check if profile is complete
-        const { data: playerData } = await supabase
-          .from('players')
-          .select('alter_ego_name')
-          .eq('user_id', data.user.id)
-          .single();
-
-        if (!playerData?.alter_ego_name) {
-          router.push('/profile/setup');
-        } else {
-          router.push('/');
-        }
+        router.push('/');
         router.refresh();
       }
     }
