@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { createServerClient } from '@supabase/ssr';
+import { createClient } from '@supabase/supabase-js';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
@@ -46,9 +47,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // For /host, check role (host or admin only)
+  // For /host, check role using service role key so RLS never blocks it
   if (pathname.startsWith('/host')) {
-    const { data: userData } = await supabase
+    const admin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+    const { data: userData } = await admin
       .from('users')
       .select('role')
       .eq('id', user.id)
