@@ -13,11 +13,11 @@ INSERT INTO schedule_events (title, scheduled_time, day, sort_order) VALUES
 ('Game Kickoff Ceremony',                 '2026-03-06T20:00:00-05:00', 'friday',   3),
 ('Roles Revealed',                        '2026-03-06T20:30:00-05:00', 'friday',   4),
 ('Challenge #1: Drinking Games Til Death','2026-03-06T21:15:00-05:00', 'friday',   5),
-('First Murder',                          '2026-03-06T23:30:00-05:00', 'friday',   6),
+('Drinking Game: Flip Cup',               '2026-03-06T22:15:00-05:00', 'friday',   6),
+('First Murder',                          '2026-03-06T23:30:00-05:00', 'friday',   7),
 
 -- SATURDAY March 7
-('Breakfast',                             '2026-03-07T08:00:00-05:00', 'saturday', 1),
-('Roundtable #1',                         '2026-03-07T10:00:00-05:00', 'saturday', 2),
+('Breakfast & Roundtable #1',             '2026-03-07T10:00:00-05:00', 'saturday', 1),
 ('Challenge #2: Codenames',               '2026-03-07T10:30:00-05:00', 'saturday', 3),
 ('Lunch & Roundtable #2',                 '2026-03-07T12:30:00-05:00', 'saturday', 4),
 ('Murder #2',                             '2026-03-07T13:30:00-05:00', 'saturday', 5),
