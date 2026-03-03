@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
-import { Upload, User } from 'lucide-react';
+import { Upload, User, ArrowLeft } from 'lucide-react';
 import Image from 'next/image';
 
 export default function ProfileSetupPage() {
@@ -16,6 +16,7 @@ export default function ProfileSetupPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [playerId, setPlayerId] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
   const supabase = createClient();
   const router = useRouter();
 
@@ -32,7 +33,10 @@ export default function ProfileSetupPage() {
 
       if (player) {
         setPlayerId(player.id);
-        if (player.alter_ego_name) setAlterEgo(player.alter_ego_name);
+        if (player.alter_ego_name) {
+          setAlterEgo(player.alter_ego_name);
+          setIsEditing(true);
+        }
         if (player.real_name) setRealName(player.real_name);
         if (player.bio) setBio(player.bio);
         if (player.photo_url) setPhotoPreview(player.photo_url);
@@ -105,12 +109,22 @@ export default function ProfileSetupPage() {
   return (
     <div className="min-h-screen bg-betrayal-black bg-atmospheric flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-lg">
+        {isEditing && (
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-betrayal-muted hover:text-betrayal-text font-cinzel text-xs uppercase tracking-widest mb-6 transition-colors"
+          >
+            <ArrowLeft size={14} />
+            Back
+          </button>
+        )}
+
         <div className="text-center mb-8">
           <h1 className="font-cinzel text-2xl md:text-3xl font-bold text-betrayal-gold uppercase tracking-widest">
-            Create Your Character
+            {isEditing ? 'Edit Your Character' : 'Create Your Character'}
           </h1>
           <p className="text-betrayal-muted mt-2 text-sm">
-            Choose your alter ego for the weekend
+            {isEditing ? 'Update your alter ego for the weekend' : 'Choose your alter ego for the weekend'}
           </p>
         </div>
 
@@ -202,7 +216,7 @@ export default function ProfileSetupPage() {
               disabled={loading || !alterEgo.trim() || !realName.trim()}
               className="btn-primary w-full"
             >
-              {loading ? 'Saving…' : 'Enter the Game'}
+              {loading ? 'Saving…' : isEditing ? 'Save Changes' : 'Enter the Game'}
             </button>
           </form>
         </div>

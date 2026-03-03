@@ -15,6 +15,7 @@ import {
   LayoutDashboard,
   BookOpen,
   Calendar,
+  UserCircle,
 } from 'lucide-react';
 
 interface NavProps {
@@ -53,6 +54,7 @@ export default function Navigation({ userRole, votingActive: initialVoting }: Na
     { href: '/rules', label: 'Rules', icon: BookOpen },
     { href: '/leaderboard', label: 'Shields', icon: Trophy },
     { href: '/challenges', label: 'Challenges', icon: Swords },
+    { href: '/profile/setup', label: 'Profile', icon: UserCircle },
     ...(votingActive ? [{ href: '/roundtable', label: 'Vote', icon: Vote }] : []),
   ];
 

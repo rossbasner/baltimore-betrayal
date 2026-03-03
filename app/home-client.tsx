@@ -4,7 +4,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { GameState, ScheduleEvent, EventDay } from '@/lib/types';
-import { format, formatDistanceToNow, isPast } from 'date-fns';
+import { format } from 'date-fns';
 import { Clock, CheckCircle, Circle, ChevronRight, Skull } from 'lucide-react';
 
 interface HomeClientProps {
@@ -12,26 +12,59 @@ interface HomeClientProps {
   gameState: GameState | null;
 }
 
-function Countdown({ targetDate }: { targetDate: Date }) {
-  const [timeLeft, setTimeLeft] = useState('');
+const GAME_START = new Date('2026-04-10T18:00:00-04:00');
+
+function Countdown({ targetDate, onComplete }: { targetDate: Date; onComplete?: () => void }) {
+  const [parts, setParts] = useState<{ d: number; h: number; m: number; s: number } | null>(null);
 
   useEffect(() => {
-    function update() {
-      if (isPast(targetDate)) {
-        setTimeLeft('Now');
+    function tick() {
+      const diff = targetDate.getTime() - Date.now();
+      if (diff <= 0) {
+        setParts({ d: 0, h: 0, m: 0, s: 0 });
+        onComplete?.();
         return;
       }
-      setTimeLeft(formatDistanceToNow(targetDate, { addSuffix: false }));
+      setParts({
+        d: Math.floor(diff / 86400000),
+        h: Math.floor((diff % 86400000) / 3600000),
+        m: Math.floor((diff % 3600000) / 60000),
+        s: Math.floor((diff % 60000) / 1000),
+      });
     }
-    update();
-    const interval = setInterval(update, 1000);
-    return () => clearInterval(interval);
-  }, [targetDate]);
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [targetDate, onComplete]);
+
+  if (!parts) return null;
 
   return (
-    <span className="font-cinzel text-betrayal-gold text-lg font-bold">
-      {timeLeft}
-    </span>
+    <div className="flex items-end justify-center gap-1">
+      {parts.d > 0 && (
+        <>
+          <div className="text-center">
+            <div className="font-cinzel text-betrayal-gold text-3xl font-bold tabular-nums">{parts.d}</div>
+            <div className="font-cinzel text-[9px] uppercase tracking-widest text-betrayal-muted">days</div>
+          </div>
+          <span className="font-cinzel text-betrayal-gold text-2xl font-bold mb-3">:</span>
+        </>
+      )}
+      <div className="text-center">
+        <div className="font-cinzel text-betrayal-gold text-3xl font-bold tabular-nums">{String(parts.h).padStart(2, '0')}</div>
+        <div className="font-cinzel text-[9px] uppercase tracking-widest text-betrayal-muted">hr</div>
+      </div>
+      <span className="font-cinzel text-betrayal-gold text-2xl font-bold mb-3">:</span>
+      <div className="text-center">
+        <div className="font-cinzel text-betrayal-gold text-3xl font-bold tabular-nums">{String(parts.m).padStart(2, '0')}</div>
+        <div className="font-cinzel text-[9px] uppercase tracking-widest text-betrayal-muted">min</div>
+      </div>
+      <span className="font-cinzel text-betrayal-gold text-2xl font-bold mb-3">:</span>
+      <div className="text-center">
+        <div className="font-cinzel text-betrayal-gold text-3xl font-bold tabular-nums">{String(parts.s).padStart(2, '0')}</div>
+        <div className="font-cinzel text-[9px] uppercase tracking-widest text-betrayal-muted">sec</div>
+      </div>
+    </div>
   );
 }
 
@@ -97,6 +130,7 @@ export default function HomeClient({ events: initialEvents, gameState: initialGa
   const [events, setEvents] = useState(initialEvents);
   const [gameState, setGameState] = useState(initialGameState);
   const [activeDay, setActiveDay] = useState<EventDay>('friday');
+  const [gameStarted, setGameStarted] = useState(false);
   const supabase = createClient();
 
   // Determine current event (the most recent past event that isn't marked complete yet, or the current one)
@@ -163,21 +197,31 @@ export default function HomeClient({ events: initialEvents, gameState: initialGa
         </div>
       </div>
 
-      {/* Next event countdown */}
-      {nextEvent && (
+      {/* Game start countdown or next event countdown */}
+      {!gameStarted ? (
+        <div className="card border-betrayal-gold border-opacity-30 p-5 mb-6 text-center">
+          <p className="font-cinzel text-xs uppercase tracking-[0.3em] text-betrayal-muted mb-3">
+            The Game Begins In
+          </p>
+          <Countdown targetDate={GAME_START} onComplete={() => setGameStarted(true)} />
+          <p className="font-cinzel text-xs text-betrayal-muted mt-3 uppercase tracking-widest">
+            Friday · April 10 · 6:00 PM
+          </p>
+        </div>
+      ) : nextEvent ? (
         <div className="card border-betrayal-gold border-opacity-30 p-5 mb-6 text-center">
           <p className="font-cinzel text-xs uppercase tracking-[0.3em] text-betrayal-muted mb-2">
             Next Event In
           </p>
           <Countdown targetDate={new Date(nextEvent.scheduled_time)} />
-          <p className="font-cinzel text-sm text-betrayal-text mt-1">
+          <p className="font-cinzel text-sm text-betrayal-text mt-2">
             {nextEvent.title}
           </p>
           <p className="text-betrayal-muted text-xs mt-1">
             {format(new Date(nextEvent.scheduled_time), 'EEEE h:mm a')}
           </p>
         </div>
-      )}
+      ) : null}
 
       {/* Current event highlight */}
       {currentEvent && (
