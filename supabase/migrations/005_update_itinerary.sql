@@ -18,15 +18,15 @@ INSERT INTO schedule_events (title, scheduled_time, day, sort_order) VALUES
 
 -- SATURDAY March 7
 ('Breakfast & Roundtable #1',             '2026-03-07T10:00:00-05:00', 'saturday', 1),
-('Challenge #2: Codenames',               '2026-03-07T10:30:00-05:00', 'saturday', 3),
-('Lunch & Roundtable #2',                 '2026-03-07T12:30:00-05:00', 'saturday', 4),
-('Murder #2',                             '2026-03-07T13:30:00-05:00', 'saturday', 5),
-('Challenge #3: Faithful or Fake',        '2026-03-07T14:00:00-05:00', 'saturday', 6),
-('Roundtable #3',                         '2026-03-07T18:30:00-05:00', 'saturday', 7),
-('Secret Challenge for Players in Limbo', '2026-03-07T18:45:00-05:00', 'saturday', 8),
-('Dinner',                                '2026-03-07T19:30:00-05:00', 'saturday', 9),
-('Murder #3',                             '2026-03-07T21:00:00-05:00', 'saturday', 10),
-('Challenge #4: Drinking Games Til Death','2026-03-07T21:30:00-05:00', 'saturday', 11),
+('Challenge #2: Codenames',               '2026-03-07T11:00:00-05:00', 'saturday', 2),
+('Lunch & Roundtable #2',                 '2026-03-07T12:30:00-05:00', 'saturday', 3),
+('Murder #2',                             '2026-03-07T13:30:00-05:00', 'saturday', 4),
+('Challenge #3: Faithful or Fake',        '2026-03-07T14:00:00-05:00', 'saturday', 5),
+('Roundtable #3',                         '2026-03-07T18:30:00-05:00', 'saturday', 6),
+('Secret Challenge for Players in Limbo', '2026-03-07T18:45:00-05:00', 'saturday', 7),
+('Dinner',                                '2026-03-07T19:30:00-05:00', 'saturday', 8),
+('Murder #3',                             '2026-03-07T21:00:00-05:00', 'saturday', 9),
+('Challenge #4: Drinking Games Til Death','2026-03-07T21:30:00-05:00', 'saturday', 10),
 
 -- SUNDAY March 8
 ('Secret Challenge Winner Reinstated',    '2026-03-08T09:00:00-05:00', 'sunday',   1),
