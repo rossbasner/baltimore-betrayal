@@ -114,9 +114,8 @@ export default async function RulesPage() {
             </div>
             <div className="space-y-2 text-betrayal-text text-sm leading-relaxed">
               <p>
-                Shields protect you. A player with a shield cannot be banished at the roundtable
-                — if they receive the most votes, the shield is used and the player with the
-                next highest vote count is banished instead.
+                Shields protect you from being murdered in the night. If the Traitors target a
+                player who holds a shield, the murder is blocked and the shield is consumed.
               </p>
               <p className="text-betrayal-muted mt-2">
                 Shields are earned by performing well in challenges. Check the{' '}
