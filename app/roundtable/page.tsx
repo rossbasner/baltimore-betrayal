@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { redirect } from 'next/navigation';
 import AppShell from '../app-shell';
 import RoundtableClient from './roundtable-client';
@@ -21,15 +22,10 @@ export default async function RoundtablePage() {
 
   const userRole = (userData?.role ?? 'player') as UserRole;
 
-  // Get current player
-  const { data: currentPlayer } = await supabase
-    .from('players')
-    .select('*')
-    .eq('user_id', user.id)
-    .single();
+  const admin = createAdminClient();
 
   // Get game state
-  const { data: gameState } = await supabase
+  const { data: gameState } = await admin
     .from('game_state')
     .select('*')
     .eq('id', 1)
@@ -38,7 +34,7 @@ export default async function RoundtablePage() {
   // Get active roundtable
   let roundtable = null;
   if (gameState?.active_roundtable_id) {
-    const { data: rt } = await supabase
+    const { data: rt } = await admin
       .from('roundtables')
       .select('*')
       .eq('id', gameState.active_roundtable_id)
@@ -46,41 +42,40 @@ export default async function RoundtablePage() {
     roundtable = rt;
   }
 
-  // Get votable players (all non-banished, non-host, including murdered/limbo)
-  // so voting screen never reveals limbo status by absence
-  const { data: votablePlayers } = await supabase
+  // Fetch all non-banished players with user records; filter hosts in app code
+  const { data: allPlayers } = await admin
     .from('players')
     .select('*, users!inner(id, email, role)')
-    .neq('users.role', 'host')
     .neq('status', 'banished');
 
-  // Get vote counts for current roundtable (not who voted for whom)
+  const votablePlayers = (allPlayers ?? []).filter(p => p.users?.role !== 'host');
+  const currentPlayer = (allPlayers ?? []).find(p => p.user_id === user.id) ?? null;
+
+  // Get vote count + current player's vote
   let votedCount = 0;
-  if (roundtable) {
-    const { count } = await supabase
-      .from('votes')
-      .select('*', { count: 'exact', head: true })
-      .eq('roundtable_id', roundtable.id);
-    votedCount = count ?? 0;
-  }
-
-  // Get current player's vote
-  let myVote = null;
-  if (roundtable && currentPlayer) {
-    const { data: vote } = await supabase
-      .from('votes')
-      .select('voted_for_id')
-      .eq('roundtable_id', roundtable.id)
-      .eq('voter_id', currentPlayer.id)
-      .single();
-    myVote = vote?.voted_for_id ?? null;
-  }
-
-  // For reveal phase: get all votes via service role would be needed
-  // Here we pass what's accessible, host dashboard handles the reveal
+  let myVote: string | null = null;
   let allVotes: { voter_id: string; voted_for_id: string }[] = [];
-  if (roundtable?.status === 'reveal' || roundtable?.status === 'closed') {
-    const { data: votes } = await supabase
+
+  if (roundtable && currentPlayer) {
+    const [{ count }, { data: myVoteRow }] = await Promise.all([
+      admin
+        .from('votes')
+        .select('*', { count: 'exact', head: true })
+        .eq('roundtable_id', roundtable.id),
+      admin
+        .from('votes')
+        .select('voted_for_id')
+        .eq('roundtable_id', roundtable.id)
+        .eq('voter_id', currentPlayer.id)
+        .maybeSingle(),
+    ]);
+    votedCount = count ?? 0;
+    myVote = myVoteRow?.voted_for_id ?? null;
+  }
+
+  // Full breakdown only available after voting closes
+  if (roundtable && (roundtable.status === 'reveal' || roundtable.status === 'closed')) {
+    const { data: votes } = await admin
       .from('votes')
       .select('voter_id, voted_for_id')
       .eq('roundtable_id', roundtable.id);
@@ -91,10 +86,10 @@ export default async function RoundtablePage() {
     <AppShell userRole={userRole} votingActive={!!gameState?.active_roundtable_id}>
       <RoundtableClient
         currentPlayer={currentPlayer}
-        votablePlayers={votablePlayers ?? []}
+        votablePlayers={votablePlayers}
         roundtable={roundtable}
         votedCount={votedCount}
-        totalVoters={(votablePlayers ?? []).length}
+        totalVoters={votablePlayers.length}
         myVote={myVote}
         allVotes={allVotes}
         gameStateRoundtableId={gameState?.active_roundtable_id ?? null}

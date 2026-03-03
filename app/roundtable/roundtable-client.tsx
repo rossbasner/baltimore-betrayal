@@ -47,15 +47,13 @@ export default function RoundtableClient({
   const supabase = createClient();
 
   const refreshData = useCallback(async (rtId: string) => {
-    const [{ data: rt }, { count }, { data: votes }] = await Promise.all([
-      (supabase.from('roundtables') as any).select('*').eq('id', rtId).single(),
-      (supabase.from('votes') as any).select('*', { count: 'exact', head: true }).eq('roundtable_id', rtId),
-      (supabase.from('votes') as any).select('voter_id, voted_for_id').eq('roundtable_id', rtId),
-    ]);
+    const res = await fetch(`/api/roundtable?id=${rtId}`);
+    if (!res.ok) return;
+    const { roundtable: rt, count, votes } = await res.json();
     if (rt) setRoundtable(rt as Roundtable);
     setVotedCount(count ?? 0);
     if (votes) setAllVotes(votes);
-  }, [supabase]);
+  }, []);
 
   useEffect(() => {
     if (!activeRtId) return;
@@ -112,23 +110,19 @@ export default function RoundtableClient({
     if (roundtable.status !== 'open') return;
 
     setSubmitting(true);
-    const vote = {
-      roundtable_id: roundtable.id,
-      voter_id: currentPlayer.id,
-      voted_for_id: targetPlayerId,
-    };
-
-    if (myVote) {
-      await (supabase.from('votes') as any)
-        .update({ voted_for_id: targetPlayerId })
-        .eq('roundtable_id', roundtable.id)
-        .eq('voter_id', currentPlayer.id);
-    } else {
-      await (supabase.from('votes') as any).insert(vote);
+    try {
+      const res = await fetch('/api/vote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          roundtable_id: roundtable.id,
+          voted_for_id: targetPlayerId,
+        }),
+      });
+      if (res.ok) setMyVote(targetPlayerId);
+    } finally {
+      setSubmitting(false);
     }
-
-    setMyVote(targetPlayerId);
-    setSubmitting(false);
   }
 
   // ── NO ACTIVE ROUNDTABLE ──────────────────────────────────────

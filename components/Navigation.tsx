@@ -13,6 +13,8 @@ import {
   Swords,
   Vote,
   LayoutDashboard,
+  BookOpen,
+  Calendar,
 } from 'lucide-react';
 
 interface NavProps {
@@ -47,6 +49,8 @@ export default function Navigation({ userRole, votingActive: initialVoting }: Na
   const navItems = [
     { href: '/', label: 'Home', icon: Home },
     { href: '/players', label: 'Players', icon: Users },
+    { href: '/itinerary', label: 'Itinerary', icon: Calendar },
+    { href: '/rules', label: 'Rules', icon: BookOpen },
     { href: '/leaderboard', label: 'Shields', icon: Trophy },
     { href: '/challenges', label: 'Challenges', icon: Swords },
     ...(votingActive ? [{ href: '/roundtable', label: 'Vote', icon: Vote }] : []),
@@ -99,8 +103,8 @@ export default function Navigation({ userRole, votingActive: initialVoting }: Na
                       : ''
                   }`}
                 >
-                  <Icon size={20} />
-                  <span className="font-cinzel text-[10px] uppercase tracking-widest">{label}</span>
+                  <Icon size={18} />
+                  <span className="font-cinzel text-[9px] uppercase tracking-widest">{label}</span>
                 </Link>
               );
             })}
