@@ -28,11 +28,11 @@ export default async function HomePage() {
   if (userRole === 'player') {
     const { data: player } = await admin
       .from('players')
-      .select('profile_complete')
+      .select('profile_complete, alter_ego_name')
       .eq('user_id', user.id)
       .single();
 
-    if (!player?.profile_complete) redirect('/profile/setup');
+    if (!player?.profile_complete && !player?.alter_ego_name) redirect('/profile/setup');
   }
 
   const [{ data: events }, { data: gameState }] = await Promise.all([
