@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { redirect } from 'next/navigation';
 import AppShell from '../app-shell';
 import Link from 'next/link';
@@ -14,7 +15,8 @@ export default async function ChallengesPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/auth');
 
-  const { data: userData } = await supabase
+  const admin = createAdminClient();
+  const { data: userData } = await admin
     .from('users')
     .select('role')
     .eq('id', user.id)
@@ -22,7 +24,7 @@ export default async function ChallengesPage() {
 
   const userRole = (userData?.role ?? 'player') as UserRole;
 
-  const { data: gameState } = await supabase
+  const { data: gameState } = await admin
     .from('game_state')
     .select('*')
     .eq('id', 1)

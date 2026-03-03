@@ -14,7 +14,9 @@ export default async function PlayersPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/auth');
 
-  const { data: userData } = await supabase
+  // Use admin client so role is always readable regardless of RLS
+  const admin = createAdminClient();
+  const { data: userData } = await admin
     .from('users')
     .select('role')
     .eq('id', user.id)
@@ -22,9 +24,6 @@ export default async function PlayersPage() {
 
   const userRole = (userData?.role ?? 'player') as UserRole;
   const isHostView = userRole === 'host' || userRole === 'admin';
-
-  // Use admin client so RLS never silently drops rows during the join
-  const admin = createAdminClient();
   const { data: players, error: playersError } = await admin
     .from('players')
     .select('*, users!inner(id, email, role)')

@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { redirect, notFound } from 'next/navigation';
 import AppShell from '../app-shell';
 import SecretWordClient from './secret-word-client';
@@ -13,7 +14,8 @@ export default async function SecretWordGamePage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/auth');
 
-  const { data: userData } = await supabase
+  const admin = createAdminClient();
+  const { data: userData } = await admin
     .from('users')
     .select('role')
     .eq('id', user.id)

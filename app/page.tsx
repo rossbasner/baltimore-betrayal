@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { redirect } from 'next/navigation';
 import AppShell from './app-shell';
 import HomeClient from './home-client';
@@ -13,16 +14,19 @@ export default async function HomePage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/auth');
 
-  // Get user role
-  const { data: userData } = await supabase
+  // Use admin client so role is always readable regardless of RLS
+  const admin = createAdminClient();
+  const { data: userData } = await admin
     .from('users')
     .select('role')
     .eq('id', user.id)
     .single();
 
-  // Check profile complete (non-hosts)
-  if (userData?.role === 'player') {
-    const { data: player } = await supabase
+  const userRole = (userData?.role ?? 'player') as UserRole;
+
+  // Check profile complete (non-hosts/admins)
+  if (userRole === 'player') {
+    const { data: player } = await admin
       .from('players')
       .select('profile_complete')
       .eq('user_id', user.id)
@@ -31,22 +35,14 @@ export default async function HomePage() {
     if (!player?.profile_complete) redirect('/profile/setup');
   }
 
-  // Get schedule events
-  const { data: events } = await supabase
-    .from('schedule_events')
-    .select('*')
-    .order('scheduled_time', { ascending: true });
-
-  // Get game state for voting indicator
-  const { data: gameState } = await supabase
-    .from('game_state')
-    .select('*')
-    .eq('id', 1)
-    .single();
+  const [{ data: events }, { data: gameState }] = await Promise.all([
+    admin.from('schedule_events').select('*').order('scheduled_time', { ascending: true }),
+    admin.from('game_state').select('*').eq('id', 1).single(),
+  ]);
 
   return (
     <AppShell
-      userRole={(userData?.role ?? 'player') as UserRole}
+      userRole={userRole}
       votingActive={!!gameState?.active_roundtable_id}
     >
       <HomeClient

@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { redirect } from 'next/navigation';
 import AppShell from '../../app-shell';
 import LastStandClient from './last-stand-client';
@@ -13,7 +14,8 @@ export default async function LastStandPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/auth');
 
-  const { data: userData } = await supabase
+  const admin = createAdminClient();
+  const { data: userData } = await admin
     .from('users')
     .select('role')
     .eq('id', user.id)
