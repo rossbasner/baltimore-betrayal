@@ -96,7 +96,7 @@ export default function PlayerCard({ player, user, isHostView = false }: PlayerC
 
         {/* Bio */}
         {player.bio && (
-          <p className="text-betrayal-muted text-xs font-sans leading-relaxed mt-1 line-clamp-2">
+          <p className="text-betrayal-muted text-xs font-sans leading-relaxed mt-1">
             {player.bio}
           </p>
         )}
