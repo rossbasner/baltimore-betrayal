@@ -59,22 +59,23 @@ export default function ProfileSetupPage() {
 
       let photoUrl: string | undefined;
 
-      // Upload photo if selected
+      // Upload photo via server route (bypasses storage RLS)
       if (photoFile) {
-        const ext = photoFile.name.split('.').pop();
-        const filePath = `${user.id}/avatar.${ext}`;
+        const fd = new FormData();
+        fd.append('file', photoFile);
 
-        const { error: uploadError } = await supabase.storage
-          .from('player-photos')
-          .upload(filePath, photoFile, { upsert: true });
+        const uploadRes = await fetch('/api/profile/photo', {
+          method: 'POST',
+          body: fd,
+        });
 
-        if (uploadError) throw uploadError;
+        if (!uploadRes.ok) {
+          const { error } = await uploadRes.json();
+          throw new Error(error ?? 'Failed to upload photo');
+        }
 
-        const { data: urlData } = supabase.storage
-          .from('player-photos')
-          .getPublicUrl(filePath);
-
-        photoUrl = urlData.publicUrl;
+        const { url } = await uploadRes.json();
+        photoUrl = url;
       }
 
       const res = await fetch('/api/profile/setup', {
