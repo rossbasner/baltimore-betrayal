@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { redirect } from 'next/navigation';
 import AppShell from '../app-shell';
 import PlayersClient from './players-client';
@@ -22,11 +23,14 @@ export default async function PlayersPage() {
   const userRole = (userData?.role ?? 'player') as UserRole;
   const isHostView = userRole === 'host' || userRole === 'admin';
 
-  // Get all players with their user records
-  const { data: players } = await supabase
+  // Use admin client so RLS never silently drops rows during the join
+  const admin = createAdminClient();
+  const { data: players, error: playersError } = await admin
     .from('players')
     .select('*, users!inner(id, email, role)')
     .order('alter_ego_name', { ascending: true });
+
+  if (playersError) console.error('[PlayersPage] query error:', playersError);
 
   // Get game state for voting indicator
   const { data: gameState } = await supabase

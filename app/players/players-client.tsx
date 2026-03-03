@@ -22,19 +22,15 @@ export default function PlayersClient({ initialPlayers, isHostView, currentUserI
   const supabase = createClient();
 
   useEffect(() => {
+    const refetch = () => {
+      fetch('/api/players')
+        .then(r => r.json())
+        .then(({ players: data }) => { if (data) setPlayers(data as PlayerWithUser[]); });
+    };
+
     const channel = supabase
       .channel('players-list')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'players' },
-        () => {
-          supabase
-            .from('players')
-            .select('*, users!inner(id, email, role)')
-            .order('alter_ego_name', { ascending: true })
-            .then(({ data }) => { if (data) setPlayers(data as PlayerWithUser[]); });
-        }
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, refetch)
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
