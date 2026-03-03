@@ -77,32 +77,20 @@ export default function ProfileSetupPage() {
         photoUrl = urlData.publicUrl;
       }
 
-      const profileData: Record<string, unknown> = {
-        alter_ego_name: alterEgo.trim(),
-        real_name: realName.trim(),
-        bio: bio.trim(),
-        profile_complete: true,
-      };
-      if (photoUrl) profileData.photo_url = photoUrl;
+      const res = await fetch('/api/profile/setup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          alter_ego_name: alterEgo.trim(),
+          real_name: realName.trim(),
+          bio: bio.trim(),
+          ...(photoUrl ? { photo_url: photoUrl } : {}),
+        }),
+      });
 
-      if (playerId) {
-        // Normal case: player row already exists, just update it
-        const { error: updateError } = await supabase
-          .from('players')
-          .update(profileData)
-          .eq('id', playerId);
-        if (updateError) throw updateError;
-      } else {
-        // Trigger didn't create the rows — create them now
-        const { error: userError } = await supabase
-          .from('users')
-          .upsert({ id: user.id, email: user.email }, { onConflict: 'id' });
-        if (userError) throw userError;
-
-        const { error: insertError } = await supabase
-          .from('players')
-          .insert({ user_id: user.id, ...profileData });
-        if (insertError) throw insertError;
+      if (!res.ok) {
+        const { error } = await res.json();
+        throw new Error(error ?? 'Failed to save profile');
       }
 
       router.push('/players');
