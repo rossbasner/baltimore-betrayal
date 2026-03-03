@@ -50,18 +50,19 @@ export default function ProfileSetupPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!playerId) return;
     setLoading(true);
     setError(null);
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { router.push('/auth'); return; }
+
       let photoUrl: string | undefined;
 
       // Upload photo if selected
       if (photoFile) {
-        const { data: { user } } = await supabase.auth.getUser();
         const ext = photoFile.name.split('.').pop();
-        const filePath = `${user!.id}/avatar.${ext}`;
+        const filePath = `${user.id}/avatar.${ext}`;
 
         const { error: uploadError } = await supabase.storage
           .from('player-photos')
@@ -76,20 +77,33 @@ export default function ProfileSetupPage() {
         photoUrl = urlData.publicUrl;
       }
 
-      const updateData: Record<string, unknown> = {
+      const profileData: Record<string, unknown> = {
         alter_ego_name: alterEgo.trim(),
         real_name: realName.trim(),
         bio: bio.trim(),
         profile_complete: true,
       };
-      if (photoUrl) updateData.photo_url = photoUrl;
+      if (photoUrl) profileData.photo_url = photoUrl;
 
-      const { error: updateError } = await supabase
-        .from('players')
-        .update(updateData)
-        .eq('id', playerId);
+      if (playerId) {
+        // Normal case: player row already exists, just update it
+        const { error: updateError } = await supabase
+          .from('players')
+          .update(profileData)
+          .eq('id', playerId);
+        if (updateError) throw updateError;
+      } else {
+        // Trigger didn't create the rows — create them now
+        const { error: userError } = await supabase
+          .from('users')
+          .upsert({ id: user.id, email: user.email }, { onConflict: 'id' });
+        if (userError) throw userError;
 
-      if (updateError) throw updateError;
+        const { error: insertError } = await supabase
+          .from('players')
+          .insert({ user_id: user.id, ...profileData });
+        if (insertError) throw insertError;
+      }
 
       router.push('/players');
     } catch (err: unknown) {
